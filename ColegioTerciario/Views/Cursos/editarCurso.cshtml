@@ -76,8 +76,8 @@
                                     </button>
                                     <ul class="dropdown-menu bgm-bluegray" role="menu">
                                         <li>
-                                            @Html.ActionLink("Tomar Asistencia", "Nueva", "Asistencias", new { cursoId = item.ID }, null)
-
+                                            <a href="/#/Curso/@item.ID/Asistencias/Nueva">Tomar Asistencia</a>
+                                            @*Html.ActionLink("Tomar Asistencia", "Nueva", "Asistencias", new { cursoId = item.ID }, null)*@
 
                                         </li>
                                     </ul>

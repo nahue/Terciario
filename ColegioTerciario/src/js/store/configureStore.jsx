@@ -26,19 +26,17 @@
  * You might want to use it to apply several store enhancers in a row.
  *
  */
-import { createStore, applyMiddleware, compose } from 'redux'
-import thunk from 'redux-thunk'
-import reducer from '../reducers'
-import api from '../middleware/api'
-import DevTools from '../components/common/dev-tools'
+import {createStore, applyMiddleware, compose} from 'redux';
+import thunk from 'redux-thunk';
+import reducer from '../reducers';
+import api from '../middleware/api';
 import createLogger from 'redux-logger';
 
 const logger = createLogger();
 const finalCreateStore = compose(
   // Middleware you want to use in development:
   applyMiddleware(thunk, api, logger),
-  // Required! Enable Redux DevTools with the monitors you chose
-  DevTools.instrument()
+  window.devToolsExtension ? window.devToolsExtension() : f => f
 )(createStore);
 
 export default function configureStore(initialState) {
@@ -47,10 +45,11 @@ export default function configureStore(initialState) {
   if (module.hot) {
     // Enable Webpack hot module replacement for reducers
     module.hot.accept('../modules/reducer', () => {
-      const nextReducer = require('../modules/reducer')
-      store.replaceReducer(nextReducer)
-    })
+      const nextReducer = require('../modules/reducer');
+
+      store.replaceReducer(nextReducer);
+    });
   }
 
-  return store
+  return store;
 }

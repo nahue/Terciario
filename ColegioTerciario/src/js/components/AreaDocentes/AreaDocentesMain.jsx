@@ -99,11 +99,11 @@ reactMixin.onClass(AreaDocentesMain, Reflux.connect(UserStore));
 reactMixin.onClass(AreaDocentesMain, AuthorizationMixin);
 
 
-const mapStateToProps = function(store) {
+const mapStateToProps = (store) => {
   return {
     areaDocentes: store.areaDocentes
   };
-}
+};
 
 function mapDispatchToProps(dispatch) {
   return {

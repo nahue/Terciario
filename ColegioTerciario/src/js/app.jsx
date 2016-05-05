@@ -9,7 +9,6 @@ import routes from './routes';
 // import { createStore, combineReducers, bindActionCreators } from 'redux';
 // import Root from './containers/Root';
 // import configureStore from './store/configureStore';
-import { Provider } from 'react-redux';
 
 require('jquery.nicescroll/jquery.nicescroll');
 require('../less/terciario.scss');
@@ -28,10 +27,6 @@ function run() {
   });
 
   const target = document.getElementById('appContainer');
-
-  /*if (target) {
-    ReactDOM.render(<Router routes={routes}/>, target);
-  }*/
 
   if (target) {
     ReactDOM.render(<Router routes={routes}/>, target);

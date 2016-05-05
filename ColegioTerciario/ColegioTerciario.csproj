@@ -367,7 +367,7 @@
     <Compile Include="Controllers\CursosController.cs" />
     <Compile Include="Controllers\DatosController.cs" />
     <Compile Include="Controllers\Api\EquivalenciasController.cs" />
-    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="img\HomeController.cs" />
     <Compile Include="Controllers\HorasController.cs" />
     <Compile Include="Controllers\InscribirAlumnosController.cs" />
     <Compile Include="Controllers\ManageController.cs" />

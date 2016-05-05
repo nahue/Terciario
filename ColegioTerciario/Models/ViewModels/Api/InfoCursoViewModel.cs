@@ -13,5 +13,9 @@ namespace ColegioTerciario.Models.ViewModels.Api
         public string Fecha { get; set; }
 
         public bool Cerrado { get; set; }
+
+        public string Ciclo { get; set; }
+
+        public string Docente { get; set; }
     }
 }

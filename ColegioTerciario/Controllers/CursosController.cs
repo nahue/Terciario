@@ -176,6 +176,13 @@ namespace ColegioTerciario.Controllers
                     break;
                 case "P2":
                     cursada.CURSADA_NOTA_P2 = nota;
+                    if (cursada.CURSADA_NOTA_P1 != null && cursada.CURSADA_NOTA_P1 != "Ausente")
+                    {
+                        if (int.Parse(cursada.CURSADA_NOTA_P1) > 6 && int.Parse(nota) > 6)
+                        {
+                            cursada.CURSADA_ESTADO_ACADEMICO = "Regular";
+                        }
+                    }
                     break;
                 case "R2":
                     cursada.CURSADA_NOTA_R2 = nota;

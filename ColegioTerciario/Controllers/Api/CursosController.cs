@@ -11,6 +11,8 @@ using ColegioTerciario.DAL.Models;
 using ColegioTerciario.Models;
 using ColegioTerciario.Models.ViewModels;
 using ColegioTerciario.Models.ViewModels.Api;
+using System.Net.Http.Formatting;
+using System.Globalization;
 
 namespace ColegioTerciario.Controllers.Api
 {
@@ -368,10 +370,16 @@ namespace ColegioTerciario.Controllers.Api
                 .Where(c => c.CURSADA_MATERIAS_X_CURSOS_ID == id && c.CURSADA_ALUMNO != null).ToList();
             foreach (Cursada cursada in cursadas)
             {
+                if (cursada.CURSADA_ESTADO_ASISTENCIA == "Libre")
+                {
+                    continue;
+                }
+
                 alumnos.Add(new
                 {
                     ID = cursada.CURSADA_ALUMNOS_ID,
-                    NOMBRE = cursada.CURSADA_ALUMNO.PERSONA_NOMBRE
+                    NOMBRE = cursada.CURSADA_ALUMNO.PERSONA_NOMBRE,
+                    APELLIDO = cursada.CURSADA_ALUMNO.PERSONA_APELLIDO
                 });
             }
 
@@ -387,6 +395,8 @@ namespace ColegioTerciario.Controllers.Api
                 Materia_x_Curso curso = _db.Materias_X_Cursos
                         .Include("MATERIA_X_CURSO_CARRERA")
                         .Include("MATERIA_X_CURSO_MATERIA")
+                        .Include("MATERIA_X_CURSO_DOCENTE")
+                        .Include("MATERIA_X_CURSO_CICLO")
                         .SingleOrDefault(m => m.ID == id);
 
                 switch (instancia)
@@ -407,16 +417,63 @@ namespace ColegioTerciario.Controllers.Api
                     Carrera = curso.MATERIA_X_CURSO_CARRERA.CARRERA_NOMBRE,
                     Materia = curso.MATERIA_X_CURSO_MATERIA.MATERIA_NOMBRE,
                     Fecha = fecha != null ? fecha.Value.ToString("dd/MM/yyyy") : "",
-                    Cerrado = curso.MATERIA_X_CURSO_DEFINITIVO_EN_LIBRO
+                    Cerrado = curso.MATERIA_X_CURSO_DEFINITIVO_EN_LIBRO,
+                    Docente = curso.MATERIA_X_CURSO_DOCENTE.PERSONA_APELLIDO + ", " + curso.MATERIA_X_CURSO_DOCENTE.PERSONA_NOMBRE,
+                    Ciclo = curso.CICLO_ANIO
                 };
                 return Ok(vm);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 return NotFound();
             }
             
         }
+
+        [HttpPost]
+        public IHttpActionResult GuardarAsistencias(int? id, [FromBody]FormDataCollection collection)
+        {
+            if (!collection.Any(g => g.Key == "asistencia[]"))
+            {
+                return BadRequest();
+            }
+
+            //var fecha = DateTime.ParseExact(collection.Get("fecha"), "dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            string[] presentes = collection.Get("asistencia[]").Split(',');
+            var fechaString = collection["FECHA"];
+            var fecha = DateTime.ParseExact(fechaString, "dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            if (_db.Asistencias.Any(a => a.ASISTENCIA_FECHA == fecha && a.MATERIA_X_CURSOS_ID == id))
+            {
+                return BadRequest("Ya se tomó asistencia para este curso");
+            }
+
+            IEnumerable<Cursada> cursadas = _db.Cursadas
+                .Include("CURSADA_ALUMNO")
+                .OrderBy(c => c.CURSADA_ALUMNO.PERSONA_APELLIDO)
+                .Where(c => c.CURSADA_MATERIAS_X_CURSOS_ID == id).ToList();
+
+            foreach (Cursada cursada in cursadas)
+            {
+                Persona alumno = cursada.CURSADA_ALUMNO;
+                var asistencia = new Asistencia();
+                 asistencia.ASISTENCIA_FECHA = fecha;
+                asistencia.ASISTENCIA_ALUMNO_ID = cursada.CURSADA_ALUMNOS_ID;
+                asistencia.MATERIA_X_CURSOS_ID = id;
+                bool presente = presentes.Contains(cursada.CURSADA_ALUMNOS_ID.ToString());
+                if (presente)
+                {
+                    asistencia.ASISTENCIA_PRESENTE = true;
+                }
+
+                _db.Asistencias.Add(asistencia);
+                _db.SaveChanges();
+            }
+
+            return Ok();
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
