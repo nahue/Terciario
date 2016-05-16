@@ -2,6 +2,7 @@ import AsistenciasList from './AsistenciasList';
 import React from 'react';
 import {RefreshIndicator, Snackbar} from 'material-ui';
 import axios from 'axios';
+import moment from 'moment';
 
 export default class AsistenciasContainer extends React.Component {
   constructor() {
@@ -12,20 +13,21 @@ export default class AsistenciasContainer extends React.Component {
       isLoading: false,
       openNotification: false,
       message: '',
-      bodyStyle: null
+      bodyStyle: null,
+      fecha: moment().format("DD/MM/YYYY")
     }
   }
-  componentDidMount() {
-    this.setState({isLoading: true});
+
+  _loadData(fecha) {
     $.ajax({
-      url: `/api/Cursos/GetAlumnos/${this.props.params.course_id}`,
+      url: `/api/Cursos/GetAlumnosParaInscripciones/${this.props.params.course_id}?FECHA=${fecha}`,
       dataType: 'json',
-      success: function(alumnos) {
+      success: (alumnos) => {
         this.setState({
           alumnos: alumnos,
           isLoading: false
         });
-      }.bind(this)
+      }
     });
 
     $.ajax({
@@ -37,15 +39,21 @@ export default class AsistenciasContainer extends React.Component {
         });
       }
     })
-
   }
+
+  componentDidMount() {
+    this.setState({isLoading: true});
+    this._loadData(this.state.fecha);
+  }
+
   exit() {
     this.props.history.replaceState(null, '/')
   }
 
-  _save(data) {
+  _save(date) {
     this.setState({isSaving: true});
-    axios.post(`/api/Cursos/GuardarAsistencias/${this.props.params.course_id}`, data)
+
+    axios.post(`/api/Cursos/GuardarAsistencias/${this.props.params.course_id}?FECHA=${this.state.fecha}`, this.state.alumnos)
       .then((response) => {
         this.setState({
           message: 'Asistencias guardadas correctamente',
@@ -66,12 +74,29 @@ export default class AsistenciasContainer extends React.Component {
   }
 
   resetNotification() {
-    console.log("RESET");
     this.setState({
       openNotification: false,
       message: '',
       bodyStyle: null
     })
+  }
+
+  _onChangeDate(e, newDate){
+    this.setState({fecha: moment(newDate).format("DD/MM/YYYY")});
+    this._loadData(moment(newDate).format("DD/MM/YYYY"));
+  }
+
+  _onToggle(dni, event, value) {
+    console.log(dni, event, value);
+    let alumnos = this.state.alumnos.map((alumno) => {
+      if (alumno.DNI == dni) {
+        alumno.PRESENTE = value;
+      }
+      return alumno;
+    });
+
+    this.setState({alumnos});
+
   }
 
   render() {
@@ -96,6 +121,9 @@ export default class AsistenciasContainer extends React.Component {
           isLoading={this.state.isLoading}
           isSaving={this.state.isSaving}
           save={this._save.bind(this)}
+          fecha={this.state.fecha}
+          onChangeDate={this._onChangeDate.bind(this)}
+          onToggle={this._onToggle.bind(this)}
         />;
         <div style={style.container}>
           <RefreshIndicator

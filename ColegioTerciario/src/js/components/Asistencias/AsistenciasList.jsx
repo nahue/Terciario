@@ -2,6 +2,7 @@ import React from 'react';
 import axios from 'axios';
 import {Toggle, RaisedButton, Snackbar } from 'material-ui';
 import FechaComponent from '../UI/Fecha';
+import ReactDOM from 'react-dom';
 
 class Lista extends React.Component {
   render() {
@@ -11,12 +12,14 @@ class Lista extends React.Component {
           <tbody>
             {this.props.alumnos.map((alumno) => {
               return (
-                <tr key={alumno.ID}>
+                <tr key={alumno.DNI}>
                   <td style={{width: '140px'}}>
                     <Toggle
                       name="asistencia[]"
                       label="Presente"
                       value={alumno.ID}
+                      defaultToggled={this.props.alumnos[this.props.alumnos.indexOf(alumno)].PRESENTE}
+                      onToggle={this.props.onToggle.bind(this, alumno.DNI)}
                     />
                   </td>
                   <td>{alumno.APELLIDO}, {alumno.NOMBRE}</td>
@@ -36,8 +39,40 @@ export default class Asistencias extends React.Component {
 
   }
 
-  _toggle(id, event, value) {
-    let index = this.props.alumnos.findIndex((alumno) => {return alumno.ID == id})
+  _onChangeDate() {
+    this.props.onChangeDate();
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    console.log(nextProps, nextState);
+    if (nextProps.alumnos.length == 0) {
+      return false;
+    } else {
+      if (this.props.alumnos.length == nextProps.alumnos.length) {
+        var oldAlumnos = [];
+        var newAlumnos = [];
+
+        this.props.alumnos.map((alumno) => {
+           if (alumno.PRESENTE == true) {
+               oldAlumnos.push(alumno);
+           }
+        });
+
+        nextProps.alumnos.map((alumno) => {
+           if (alumno.PRESENTE == true) {
+               newAlumnos.push(alumno);
+           }
+        });
+
+        if (oldAlumnos.length != newAlumnos.length) {
+          return true;
+        }
+
+
+        return false;
+      }
+      return true;
+    }
   }
 
   _handleSubmit(e) {
@@ -46,24 +81,10 @@ export default class Asistencias extends React.Component {
 
     let data = form.serialize();
     this.props.save(data);
-    /*
-    axios.post(`/api/Cursos/GuardarAsistencias/${this.props.course_id}`, data)
-      .then((response) => {
-        this.setState({
-          openNotification: true
-        });
-      })
-      .catch((response) => {
-        this.setState({
-          message: response.data.Message,
-          openNotification: true,
-          bodyStyle: {backgroundColor: "#f44336"}
-        });
-      });
-    */
   }
 
   render() {
+    console.log("RENDER LIST");
     return (
       <form ref="form" onSubmit={this._handleSubmit.bind(this)}>
       <div className="block-header">
@@ -86,7 +107,9 @@ export default class Asistencias extends React.Component {
             hintText="Seleccionar Fecha"
             mode="landscape"
             name="FECHA"
-            defaultDate={new Date()}/>
+            ref="FECHA"
+            defaultValue={this.props.fecha}
+            onChange={this.props.onChangeDate}/>
         </div>
       </div>
       <div className="card">
@@ -96,7 +119,7 @@ export default class Asistencias extends React.Component {
             :
             this.props.alumnos.length > 0 ?
               <div className="card-body">
-                <Lista alumnos={this.props.alumnos} toggle={this._toggle.bind(this)}/>
+                <Lista alumnos={this.props.alumnos} onToggle={this.props.onToggle}/>
               </div>
               :
               <div className="card-body card-padding">

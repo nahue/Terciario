@@ -125,8 +125,8 @@
 
                                 @if (ViewBag.FINALES.Count == 0)
                                 {
-                                    
-                                }    
+
+                                }
                                 else if (ViewBag.FINALES.Count > 1)
                                 {
                                     using (Html.BeginForm("ImprimirAnalitico", "Personas", new { id = Model.ID }))
@@ -149,7 +149,7 @@
                                     {
                                         <input type="hidden" name="ID" value="@Model.ID" />
                                         <input type="hidden" name="carreraID" value="@(ViewBag.FINALES[0].CarreraID)" />
-                                        
+
                                         <button type="submit" class="btn btn-primary">
                                             Imprimir Analitico
                                         </button>
@@ -191,7 +191,36 @@
                                     }
 
                                 }
-                            </div>
+
+                                @if (ViewBag.EQUIVALENCIAS != null)
+                                {
+                                    <h2>Equivalencias</h2>
+                                    @Html.ActionLink("Ir a Acta", "Edit", "Equivalencias", new { id = ViewBag.EQUIVALENCIA_ID }, null)
+                                        <table class="table table-condensed table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th></th>
+                                                    <th>Fecha</th>
+                                                    <th>Materia</th>
+                                                    <th>Profesor</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (ColegioTerciario.DAL.Models.Equivalencia_Detalle equivalencia in ViewBag.EQUIVALENCIAS)
+                                            {
+                                                    <tr>
+                                                        <td></td>
+                                                        <td>@String.Format("{0:dd/MM/yyyy}", equivalencia.EQUIVALENCIA.EQUIVALENCIA_FECHA)</td>
+                                                        <td>@equivalencia.EQUIVALENCIA_DETALLE_MATERIA.MATERIA_NOMBRE</td>
+                                                        <td>@equivalencia.EQUIVALENCIA_DETALLE_PROFESOR.PERSONA_NOMBRE</td>
+                                                    </tr>
+                                            }
+                                            </tbody>
+                                        </table>
+                                        }
+
+
+</div>
                         </div>
                     </div>
                 }

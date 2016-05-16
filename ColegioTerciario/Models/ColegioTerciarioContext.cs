@@ -121,6 +121,9 @@ namespace ColegioTerciario.Models
             modelBuilder.Entity<InscripcionesConfig>()
                 .Map(m => m.Requires("IsDeleted").HasValue(false))
                 .Ignore(m => m.IsDeleted);
+            modelBuilder.Entity<Asistencia>()
+                .Map(m => m.Requires("IsDeleted").HasValue(false))
+                .Ignore(m => m.IsDeleted);
             base.OnModelCreating(modelBuilder);
         }
 

@@ -361,9 +361,28 @@ namespace ColegioTerciario.Controllers.Api
         }
 
         [HttpGet]
-        public IHttpActionResult GetAlumnos(int id)
+        public IHttpActionResult GetAlumnosParaInscripciones(int id, string fecha)
         {
             List<object> alumnos = new List<object>();
+
+            var FECHA = DateTime.ParseExact(fecha, "dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            // Si ya existe una asistencia...
+            if (_db.Asistencias.Any(a => a.ASISTENCIA_FECHA == FECHA && a.MATERIA_X_CURSOS_ID == id))
+            {
+                var asistencias = _db.Asistencias
+                    .Where(a => a.MATERIA_X_CURSOS_ID == id && a.ASISTENCIA_FECHA == FECHA && a.ALUMNO != null)
+                    .OrderBy(c => c.ALUMNO.PERSONA_APELLIDO)
+                    .Select(a => new
+                    {
+                        DNI = a.ALUMNO.PERSONA_DOCUMENTO_NUMERO,
+                        NOMBRE = a.ALUMNO.PERSONA_NOMBRE,
+                        APELLIDO = a.ALUMNO.PERSONA_APELLIDO,
+                        PRESENTE = a.ASISTENCIA_PRESENTE
+                    });
+                    return Ok(asistencias);
+            }
+
             IEnumerable<Cursada> cursadas = _db.Cursadas
                 .Include("CURSADA_ALUMNO")
                 .OrderBy(c => c.CURSADA_ALUMNO.PERSONA_APELLIDO)
@@ -378,8 +397,10 @@ namespace ColegioTerciario.Controllers.Api
                 alumnos.Add(new
                 {
                     ID = cursada.CURSADA_ALUMNOS_ID,
+                    DNI = cursada.CURSADA_ALUMNO.PERSONA_DOCUMENTO_NUMERO,
                     NOMBRE = cursada.CURSADA_ALUMNO.PERSONA_NOMBRE,
-                    APELLIDO = cursada.CURSADA_ALUMNO.PERSONA_APELLIDO
+                    APELLIDO = cursada.CURSADA_ALUMNO.PERSONA_APELLIDO,
+                    PRESENTE = false
                 });
             }
 
@@ -430,29 +451,57 @@ namespace ColegioTerciario.Controllers.Api
             
         }
 
-        [HttpPost]
-        public IHttpActionResult GuardarAsistencias(int? id, [FromBody]FormDataCollection collection)
+        [HttpGet]
+        public IHttpActionResult ChequearAsistencia(int? id, DateTime fecha)
         {
-            if (!collection.Any(g => g.Key == "asistencia[]"))
-            {
-                return BadRequest();
-            }
-
-            //var fecha = DateTime.ParseExact(collection.Get("fecha"), "dd/MM/yyyy", CultureInfo.InvariantCulture);
-
-            string[] presentes = collection.Get("asistencia[]").Split(',');
-            var fechaString = collection["FECHA"];
-            var fecha = DateTime.ParseExact(fechaString, "dd/MM/yyyy", CultureInfo.InvariantCulture);
-
             if (_db.Asistencias.Any(a => a.ASISTENCIA_FECHA == fecha && a.MATERIA_X_CURSOS_ID == id))
             {
-                return BadRequest("Ya se tomó asistencia para este curso");
+                return Ok();
             }
+
+            return NotFound();
+
+        }
+
+        public class GuardarAsistenciasVM
+        {
+            //public int ID;
+            public string DNI;
+            public string NOMBRE;
+            public string APELLIDO;
+            public bool PRESENTE;
+        }
+
+        [HttpPost]
+        public IHttpActionResult GuardarAsistencias(int? id, string FECHA, [FromBody]List<GuardarAsistenciasVM> collection)
+        {
+
+            var fecha = DateTime.ParseExact(FECHA, "dd/MM/yyyy", CultureInfo.InvariantCulture);
+
 
             IEnumerable<Cursada> cursadas = _db.Cursadas
                 .Include("CURSADA_ALUMNO")
                 .OrderBy(c => c.CURSADA_ALUMNO.PERSONA_APELLIDO)
-                .Where(c => c.CURSADA_MATERIAS_X_CURSOS_ID == id).ToList();
+                .Where(c => c.CURSADA_MATERIAS_X_CURSOS_ID == id && c.CURSADA_ALUMNO != null).ToList();
+
+            // SI ESTAMOS EDITANDO UNA ASISTENCIA
+            if (_db.Asistencias.Any(a => a.ASISTENCIA_FECHA == fecha && a.MATERIA_X_CURSOS_ID == id))
+            {
+                //return BadRequest("Ya se tomó asistencia para este curso");
+                var asistencias = _db.Asistencias.Include("ALUMNO").Where(a => a.ASISTENCIA_FECHA == fecha && a.MATERIA_X_CURSOS_ID == id && a.ALUMNO != null)
+                                    .ToList();
+                foreach (var asistencia in asistencias)
+                {
+                    var asist = collection.SingleOrDefault(a => a.DNI == asistencia.ALUMNO.PERSONA_DOCUMENTO_NUMERO);
+
+                    asistencia.ASISTENCIA_PRESENTE = asist.PRESENTE;
+                    
+                }
+                _db.SaveChanges();
+
+                return Ok();
+            }
+
 
             foreach (Cursada cursada in cursadas)
             {
@@ -461,12 +510,13 @@ namespace ColegioTerciario.Controllers.Api
                  asistencia.ASISTENCIA_FECHA = fecha;
                 asistencia.ASISTENCIA_ALUMNO_ID = cursada.CURSADA_ALUMNOS_ID;
                 asistencia.MATERIA_X_CURSOS_ID = id;
-                bool presente = presentes.Contains(cursada.CURSADA_ALUMNOS_ID.ToString());
-                if (presente)
-                {
-                    asistencia.ASISTENCIA_PRESENTE = true;
-                }
 
+                var asiste = collection.SingleOrDefault(c => c.DNI == cursada.CURSADA_ALUMNO.PERSONA_DOCUMENTO_NUMERO);
+                if (asiste != null)
+                {
+                    asistencia.ASISTENCIA_PRESENTE = asiste.PRESENTE;
+                }
+                
                 _db.Asistencias.Add(asistencia);
                 _db.SaveChanges();
             }

@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Web.Http;
+using WebApiContrib.Formatting.Xlsx;
 
 namespace ColegioTerciario
 {
@@ -28,6 +29,7 @@ namespace ColegioTerciario
             formatter.SerializerSettings.ContractResolver =
                 new Newtonsoft.Json.Serialization.DefaultContractResolver();
 
+            config.Formatters.Add(new XlsxMediaTypeFormatter());
         }
     }
 }

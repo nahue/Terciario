@@ -1,4 +1,5 @@
-﻿using ColegioTerciario.DAL.Models;
+﻿using ClosedXML.Excel;
+using ColegioTerciario.DAL.Models;
 using ColegioTerciario.Models;
 using ColegioTerciario.Models.ViewModels;
 using MvcFlash.Core;
@@ -7,7 +8,9 @@ using Rotativa.MVC;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Web.Mvc;
 
@@ -163,6 +166,81 @@ namespace ColegioTerciario.Controllers
 
             Flash.Instance.Success("Asistencias", "Se guardaron correctamente las Asistencias");
             return Redirect(collection["NEXT"]);
+        }
+
+        [HttpGet]
+        public ActionResult Exportar(int? id, string format = "json")
+        {
+            DataTable dt = new DataTable();
+            dt.Columns.Add("ALUMNO", typeof(string));
+            var q = db.Asistencias
+                            .Include("ALUMNO")
+                            .Include("MATERIA_X_CURSO")
+                            .Where(a => a.MATERIA_X_CURSOS_ID == id && a.ALUMNO != null);
+            var fechas = q
+                        .GroupBy(a => a.ASISTENCIA_FECHA)
+                        .OrderBy(a => a.Key)
+                        .Select(a => a.Key).ToList();
+            foreach (var fecha in fechas)
+            {
+                dt.Columns.Add(fecha.ToString("dd/MM/yyyy", new CultureInfo("es-AR")), typeof(string));
+            }
+
+
+            var alumnos = q
+                        .GroupBy(a => a.ALUMNO)
+                        .OrderBy(a => a.Key.PERSONA_APELLIDO)
+                        .Select(a => new
+                        {
+                            ID = a.Key.ID,
+                            NOMBRE = a.Key.PERSONA_APELLIDO + ", " + a.Key.PERSONA_NOMBRE + " - " + a.Key.PERSONA_DOCUMENTO_NUMERO,
+                            DOCUMENTO = a.Key.PERSONA_DOCUMENTO_NUMERO
+                        }).ToList();
+
+            foreach (var alumno in alumnos)
+            {
+                DataRow dr = dt.NewRow();
+                dr["ALUMNO"] = alumno.NOMBRE;
+                foreach (var fecha in fechas)
+                {
+                    var presente = q.Where(a => a.ASISTENCIA_ALUMNO_ID == alumno.ID && a.ASISTENCIA_FECHA == fecha)
+                            .OrderBy(a => a.ASISTENCIA_FECHA)
+                            .SingleOrDefault(p => p.ASISTENCIA_PRESENTE);
+
+                    if (presente == null)
+                    {
+                        dr[fecha.ToString("dd/MM/yyyy", new CultureInfo("es-AR"))] = "";
+                    }
+                    else
+                    {
+                        dr[fecha.ToString("dd/MM/yyyy", new CultureInfo("es-AR"))] = presente.ASISTENCIA_PRESENTE ? "P" : "A";
+                    }
+
+                }
+
+                dt.Rows.Add(dr);
+
+            }
+
+            using (XLWorkbook wb = new XLWorkbook())
+            {
+                wb.AddWorksheet(dt, "Asistencias");
+                Response.Clear();
+                Response.Buffer = true;
+                Response.Charset = "";
+                Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                Response.AddHeader("content-disposition", "attachment;filename=Asistencias.xlsx");
+                using (MemoryStream MyMemoryStream = new MemoryStream())
+                {
+                    wb.SaveAs(MyMemoryStream);
+                    MyMemoryStream.WriteTo(Response.OutputStream);
+                    var os = Response.OutputStream;
+                    Response.Flush();
+                    Response.End();
+                }
+            }
+
+            return null;
         }
     }
 }

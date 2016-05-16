@@ -86,7 +86,10 @@ namespace ColegioTerciario.Controllers
             {
                 detalle.ACTA_EXAMEN_DETALLE_ESTADO = "APROBADO";
             }
-            detalle.ACTA_EXAMEN_DETALLE_ESTADO = "REPROBADO";
+            else
+            {
+                detalle.ACTA_EXAMEN_DETALLE_ESTADO = "REPROBADO";
+            }
             db.SaveChanges();
 
             return Json(new { }, JsonRequestBehavior.AllowGet);

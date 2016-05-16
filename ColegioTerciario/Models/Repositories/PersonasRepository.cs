@@ -139,7 +139,22 @@ namespace ColegioTerciario.Models.Repositories
                             }).OrderBy(f => new { f.CodigoMateria, f.Fecha })
                         })
                     };
+
             return actas;
+        }
+
+        public List<Equivalencia_Detalle> GetEquivalencias(Persona persona)
+        {
+            try
+            {
+                var equivalencias = _dbContext.Equivalencias.SingleOrDefault(e => e.EQUIVALENCIA_ALUMNO_ID == persona.ID).EQUIVALENCIA_DETALLES.ToList();
+                return equivalencias;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            
         }
 
         private string CalcularCiclo(string anio)

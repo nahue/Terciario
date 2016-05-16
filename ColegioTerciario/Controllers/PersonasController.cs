@@ -212,6 +212,13 @@ namespace ColegioTerciario.Controllers
                 ViewBag.SITUACIONPORCICLOS = _repo.GetSituacionAcademicaPorCiclos(persona).ToList();
                 ViewBag.SITUACIONPORMATERIAS = _repo.GetSituacionAcademicaPorMaterias(persona).ToList();
                 ViewBag.FINALES = _repo.GetFinales(persona).ToList();
+                var equivalencias = _repo.GetEquivalencias(persona);
+                ViewBag.EQUIVALENCIAS = equivalencias;
+
+                if (equivalencias != null)
+                {
+                    ViewBag.EQUIVALENCIA_ID = equivalencias.First().EQUIVALENCIA_ID;
+                }
             }
             return View(persona);
         }
