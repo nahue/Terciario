@@ -35,7 +35,6 @@ var theme_js = [
 
 var theme_css = [
     'src/css/bootstrap.min.css',
-    'src/css/bootstrap-editable.css',
     'src/css/bootstrap-switch.css',
     'src/plugins/dataTables.bootstrap.css',
     'src/css/font-awesome.min.css',
@@ -45,7 +44,8 @@ var theme_css = [
     'src/css/plugins-md.css',
     'src/css/layout.css',
     'src/css/default.css',
-    'src/css/Site.css'
+    'src/css/Site.css',
+    'src/css/bootstrap-editable.css'
 ];
 
 gulp.task('css', function () {

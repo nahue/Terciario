@@ -532,10 +532,14 @@
             type: 'combodate',
             mode: 'popup',
             pk: @Model.ID,
+            //format: 'dd/mm/yyyy',
             viewformat: "DD/MM/YYYY",
             locale: "es",
             language: "es",
-            emptytext: "Editar fecha"
+            emptytext: "Editar fecha",
+            combodate: {
+                maxYear: new Date().getFullYear()
+            }
         });
 
         $('.eliminar-integrante').click(function(e){
