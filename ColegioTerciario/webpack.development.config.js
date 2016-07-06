@@ -41,7 +41,7 @@ module.exports = {
     debug: true,
     proxy: {
       '*': {
-        target: 'http://localhost:63440/'
+        target: 'http://localhost:49943/'
       }
     }
   },

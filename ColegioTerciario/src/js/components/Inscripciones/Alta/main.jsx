@@ -16,7 +16,8 @@ import {RaisedButton, Dialog} from 'material-ui';
 export default React.createClass({
   getInitialState() {
     return {
-      key: 1
+      key: 1,
+      showModal: false
     };
   },
 
@@ -136,7 +137,7 @@ export default React.createClass({
   },
 
   _onAskConfirmation() {
-    this.refs.modal.show();
+    this.setState({showModal: true});
   },
 
   _onPrev() {
@@ -166,6 +167,7 @@ export default React.createClass({
               title="Importante"
               actions={standardActions}
               actionFocus="submit"
+              open={this.state.showModal}
               modal={true}>
               <p>
                 Esta a punto de finalizar la PRE-Inscripción, recuerde que para hacer efectiva la
